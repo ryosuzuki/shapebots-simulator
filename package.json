@@ -1,0 +1,40 @@
+{
+  "name": "shapebots-simulator",
+  "version": "1.0.0",
+  "description": "ShapeBots simulator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryosuzuki/shapebots-simulator.git"
+  },
+  "author": "Ryo Suzuki <ryosuzk@googlemail.com> (http://ryosuzuki.org/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryosuzuki/shapebots-simulator/issues"
+  },
+  "homepage": "https://github.com/ryosuzuki/shapebots-simulator#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "lodash": "^4.17.11",
+    "munkres-js": "^1.2.2",
+    "react": "^16.8.4",
+    "react-dom": "^16.8.4",
+    "semantic-ui-css": "^2.4.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.3.4",
+    "@babel/polyfill": "^7.2.5",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.5",
+    "css-loader": "^2.1.1",
+    "html-loader": "^0.5.5",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
+  }
+}
