@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import munkres from 'munkres-js'
 import _ from 'lodash'
 
 import * as THREE from 'three'
@@ -7,6 +6,15 @@ import OrbitControls from 'orbit-controls-es6'
 
 // import Robot from './Robot'
 // import Point from './Point'
+
+import munkres from 'munkres-js'
+import parse from 'parse-svg-path'
+import contours from 'svg-path-contours'
+import simplify from 'simplify-path'
+import { toPoints, toPath } from 'svg-points'
+import { rotate, offset, add, remove, scale } from 'points'
+
+import Menu from './Menu'
 
 class App extends Component {
   constructor(props) {
@@ -21,8 +29,10 @@ class App extends Component {
       targets: {},
     }
 
-    this.width = 1000
-    this.height = 800
+    this.max = 100
+
+    this.width = 700 // 1000
+    this.height = 500 // 800
 
     this.raycaster = new THREE.Raycaster()
     this.mouse2D = new THREE.Vector3(0, 10000, 0.5)
@@ -99,18 +109,66 @@ class App extends Component {
     this.setState({ targets: targets })
   }
 
-  show() {
-    let points = [
-      { x: -10, y: -10 },
-      { x: 10, y: -10 },
-      { x: 10, y: 10 },
-      { x: -10, y: 10 }
-    ]
+  draw() {
+    if (!this.pathData) return
+    // this.pathData = toPath(this.svg)
+    this.path = parse(this.pathData)
+    this.contours = contours(this.path)
 
+    let original = this.contours
+
+    // this.contours = simplify.douglasPeucker(this.contours, 0.1)
+    // this.contours = simplify.radialDistance(this.contours, 1)
+    // this.contours = _.uniqWith(this.contours, _.isEqual)
+
+    console.log(this.contours)
+    let scale = 1
+    let offset = 10
+    let points = []
+    for (let contour of this.contours) {
+      contour = simplify.radialDistance(contour, 1)
+      for (let point of contour) {
+        points.push({
+          x: point[0] * scale - offset,
+          y: point[1] * scale - offset
+        })
+      }
+    }
+
+
+    let ratio = Math.round(points.length / this.max)
+    console.log(points)
+    points = points.map((point, i) => {
+      if (i % ratio === 0) return point
+    })
+    this.points = _.compact(points)
+    console.log(this.points)
+
+    this.distMatrix = this.assign(this.points)
+
+    let ids = munkres(this.distMatrix)
+    let rids = [...Array(this.max).keys()]
+    for (let id of ids) {
+      let pid = id[0]
+      let rid = id[1]
+      let point = this.points[pid]
+      this.moveRobot(rid, point.x, point.y)
+      _.pull(rids, rid)
+    }
+
+    // console.log(rids)
+    let i = 0
+    for (let rid of rids) {
+      this.moveRobot(rid, i, -30)
+      i++
+    }
+  }
+
+  assign(points) {
     let distMatrix = []
     for (let point of points) {
       let distArray = []
-      for (let id = 0; id < 24; id++) {
+      for (let id = 0; id < this.max; id++) {
         let robot = this.scene.getObjectByName(id)
         let dist = Math.sqrt(
           (point.x - robot.position.x)**2 +
@@ -120,30 +178,11 @@ class App extends Component {
       }
       distMatrix.push(distArray)
     }
-    let ids = munkres(distMatrix)
-
-    console.log(distMatrix)
-
-    let rids = [...Array(24).keys()]
-    for (let id of ids) {
-      let pid = id[0]
-      let rid = id[1]
-      let point = points[pid]
-      this.moveRobot(rid, point.x, point.y)
-      _.pull(rids, rid)
-    }
-
-    console.log(rids)
-    let i = 0
-    for (let rid of rids) {
-      this.moveRobot(rid, i, -30)
-      i++
-    }
-
+    return distMatrix
   }
 
   addRobots() {
-    for (let id = 0; id < 24; id++) {
+    for (let id = 0; id < this.max; id++) {
       let xsign = Math.random() > 0.5 ? 1 : -1
       let ysign = Math.random() > 0.5 ? 1 : -1
       let x = Math.random() * 10 * xsign
@@ -192,7 +231,7 @@ class App extends Component {
   }
 
   move() {
-    for (let id = 0; id < 24; id++) {
+    for (let id = 0; id < this.max; id++) {
       let robot = this.scene.getObjectByName(id)
       let current = { x: robot.position.x, y: robot.position.y }
       let target = this.state.targets[id]
@@ -314,12 +353,11 @@ class App extends Component {
     return (
       <div>
         <div
+          id="canvas"
           style={{ width: this.width, height: this.height }}
           ref={(mount) => { this.mount = mount }}
         />
-        <div className="ui grid">
-          <h1>Hello World</h1>
-        </div>
+        <Menu />
       </div>
     )
   }

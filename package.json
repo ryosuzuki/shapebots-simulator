@@ -23,10 +23,16 @@
     "lodash": "^4.17.11",
     "munkres-js": "^1.2.2",
     "orbit-controls-es6": "^2.0.0",
+    "parse-svg-path": "^0.1.2",
+    "points": "^3.1.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "semantic-ui-css": "^2.4.1",
+    "simple-icons": "^1.9.23",
+    "simplify-path": "^1.1.0",
     "socket.io": "^2.2.0",
+    "svg-path-contours": "^2.0.0",
+    "svg-points": "^6.0.1",
     "three": "^0.102.1"
   },
   "devDependencies": {
