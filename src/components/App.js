@@ -31,8 +31,8 @@ class App extends Component {
 
     this.max = 100
 
-    this.width = 700 // 1000
-    this.height = 500 // 800
+    this.width = 1000
+    this.height = 800
 
     this.raycaster = new THREE.Raycaster()
     this.mouse2D = new THREE.Vector3(0, 10000, 0.5)
