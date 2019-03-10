@@ -21,10 +21,12 @@
     "express": "^4.16.4",
     "lodash": "^4.17.11",
     "munkres-js": "^1.2.2",
+    "orbit-controls-es6": "^2.0.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "semantic-ui-css": "^2.4.1",
-    "socket.io": "^2.2.0"
+    "socket.io": "^2.2.0",
+    "three": "^0.102.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
