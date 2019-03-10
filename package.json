@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack --color --progress --watch --mode development",
+    "deploy": "gh-pages -d build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -36,6 +37,7 @@
     "@babel/preset-react": "^7.0.0",
     "babel-loader": "^8.0.5",
     "css-loader": "^2.1.1",
+    "gh-pages": "^2.0.1",
     "html-loader": "^0.5.5",
     "style-loader": "^0.23.1",
     "webpack": "^4.29.6",

@@ -2,9 +2,6 @@ import React, { Component } from 'react'
 import munkres from 'munkres-js'
 import _ from 'lodash'
 
-
-const socket = io.connect('http://localhost:8080/')
-
 import * as THREE from 'three'
 import OrbitControls from 'orbit-controls-es6'
 
@@ -15,7 +12,6 @@ class App extends Component {
   constructor(props) {
     super(props)
     window.app = this
-    this.socket = socket
     this.state = {
       robots: [],
       data: null,
@@ -97,6 +93,55 @@ class App extends Component {
     this.scene.add(grid)
   }
 
+  moveRobot(id, x, y) {
+    let targets = this.state.targets
+    targets[id] = { x: x, y: y }
+    this.setState({ targets: targets })
+  }
+
+  show() {
+    let points = [
+      { x: -10, y: -10 },
+      { x: 10, y: -10 },
+      { x: 10, y: 10 },
+      { x: -10, y: 10 }
+    ]
+
+    let distMatrix = []
+    for (let point of points) {
+      let distArray = []
+      for (let id = 0; id < 24; id++) {
+        let robot = this.scene.getObjectByName(id)
+        let dist = Math.sqrt(
+          (point.x - robot.position.x)**2 +
+          (point.y - robot.position.y)**2
+        )
+        distArray.push(dist)
+      }
+      distMatrix.push(distArray)
+    }
+    let ids = munkres(distMatrix)
+
+    console.log(distMatrix)
+
+    let rids = [...Array(24).keys()]
+    for (let id of ids) {
+      let pid = id[0]
+      let rid = id[1]
+      let point = points[pid]
+      this.moveRobot(rid, point.x, point.y)
+      _.pull(rids, rid)
+    }
+
+    console.log(rids)
+    let i = 0
+    for (let rid of rids) {
+      this.moveRobot(rid, i, -30)
+      i++
+    }
+
+  }
+
   addRobots() {
     for (let id = 0; id < 24; id++) {
       let xsign = Math.random() > 0.5 ? 1 : -1
@@ -105,12 +150,6 @@ class App extends Component {
       let y = Math.random() * 10 * ysign
       this.addRobot(id, x, y)
     }
-  }
-
-  moveRobot(id, x, y) {
-    let targets = this.state.targets
-    targets[id] = { x: x, y: y }
-    this.setState({ targets: targets })
   }
 
   addRobot(id, x, y) {
@@ -160,7 +199,7 @@ class App extends Component {
       if (!target) continue
 
       let diff = { x: target.x - current.x, y: target.y - current.y }
-      if (Math.abs(diff.x) < 1 && Math.abs(diff.y) < 1) continue
+      if (Math.abs(diff.x) < 0.5 && Math.abs(diff.y) < 0.5) continue
 
       robot.position.x += diff.x / 100
       robot.position.y += diff.y / 100
