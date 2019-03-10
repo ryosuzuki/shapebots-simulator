@@ -11,8 +11,6 @@ import munkres from 'munkres-js'
 import parse from 'parse-svg-path'
 import contours from 'svg-path-contours'
 import simplify from 'simplify-path'
-import { toPoints, toPath } from 'svg-points'
-import { rotate, offset, add, remove, scale } from 'points'
 
 import Menu from './Menu'
 
@@ -33,6 +31,9 @@ class App extends Component {
 
     this.width = 1000
     this.height = 800
+
+    this.width = 700
+    this.height = 600
 
     this.raycaster = new THREE.Raycaster()
     this.mouse2D = new THREE.Vector3(0, 10000, 0.5)
@@ -99,51 +100,75 @@ class App extends Component {
     grid.geometry.rotateX( Math.PI / 2 )
     grid.position.z = -0.5
     this.grid = grid
-    // this.pin = pin
     this.scene.add(grid)
   }
 
-  moveRobot(id, x, y) {
+  moveRobot(id, x, y, angle, length) {
+    if (!angle) angle = 0
+    if (!length) length = 1
+    for (let id = 0; id < this.max; id++) {
+      let robot = this.scene.getObjectByName(id)
+      robot.init = false
+    }
+
     let targets = this.state.targets
-    targets[id] = { x: x, y: y }
+    targets[id] = { x: x, y: y, angle: angle, length: length }
     this.setState({ targets: targets })
+  }
+
+  drawLines() {
+    let id = 0
+    let points = []
+    for (let line of this.lines) {
+      let p1 = line[0]
+      let p2 = line[1]
+      let dx = p2.x - p1.x
+      let dy = p2.y - p1.y
+      let dist = Math.sqrt(dx**2 + dy**2)
+      let center = { x: (p2.x + p1.x)/2, y: (p2.y + p1.y)/2 }
+      let angle = Math.atan2(dx, dy)
+      let point = {
+        x: center.x,
+        y: center.y,
+        angle: -angle,
+        length: dist,
+      }
+      points.push(point)
+      id++
+    }
+    this.points = points
+    this.distMatrix = this.assign(points)
+    let ids = munkres(this.distMatrix)
+    let rids = [...Array(this.max).keys()]
+    for (let id of ids) {
+      let pid = id[0]
+      let rid = id[1]
+      let point = this.points[pid]
+      this.moveRobot(rid, point.x, point.y, point.angle, point.length)
+      _.pull(rids, rid)
+    }
+
+    // console.log(rids)
+    let i = 0
+    for (let rid of rids) {
+      this.moveRobot(rid, i, -30)
+      i++
+    }
   }
 
   draw() {
     if (!this.pathData) return
-    // this.pathData = toPath(this.svg)
     this.path = parse(this.pathData)
     this.contours = contours(this.path)
-
-    let original = this.contours
-
-    // this.contours = simplify.douglasPeucker(this.contours, 0.1)
-    // this.contours = simplify.radialDistance(this.contours, 1)
-    // this.contours = _.uniqWith(this.contours, _.isEqual)
-
-    console.log(this.contours)
-    let scale = 1
-    let offset = 10
-    let points = []
-    for (let contour of this.contours) {
-      contour = simplify.radialDistance(contour, 1)
-      for (let point of contour) {
-        points.push({
-          x: point[0] * scale - offset,
-          y: point[1] * scale - offset
-        })
-      }
-    }
+    this.outline = this.getOutline()
+    this.points = this.outline.points
+    this.lines = this.outline.lines
+    this.drawLines()
+    // this.drawDots()
+  }
 
 
-    let ratio = Math.round(points.length / this.max)
-    console.log(points)
-    points = points.map((point, i) => {
-      if (i % ratio === 0) return point
-    })
-    this.points = _.compact(points)
-    console.log(this.points)
-
+  drawDots() {
     this.distMatrix = this.assign(this.points)
 
     let ids = munkres(this.distMatrix)
@@ -163,6 +188,43 @@ class App extends Component {
       i++
     }
   }
+
+  getOutline() {
+    let scale = 1
+    let offset = 10
+    let points = []
+    let group = 0
+    for (let contour of this.contours) {
+      contour = simplify.radialDistance(contour, 1)
+      for (let point of contour) {
+        points.push({
+          x: point[0] * scale - offset,
+          y: point[1] * scale - offset,
+          group: group
+        })
+      }
+      group++
+    }
+
+    let ratio = Math.round(points.length / this.max)
+    points = points.map((point, i) => {
+      if (i % ratio === 0) return point
+    })
+    points = _.compact(points)
+    console.log(points)
+
+    let prev
+    let lines = []
+    for (let point of points) {
+      if (prev && prev.group === point.group) {
+        let line = [prev, point]
+        lines.push(line)
+      }
+      prev = point
+    }
+    return { points: points, lines: lines }
+  }
+
 
   assign(points) {
     let distMatrix = []
@@ -233,17 +295,44 @@ class App extends Component {
   move() {
     for (let id = 0; id < this.max; id++) {
       let robot = this.scene.getObjectByName(id)
-      let current = { x: robot.position.x, y: robot.position.y }
+      let current = {
+        x: robot.position.x,
+        y: robot.position.y,
+        angle: robot.rotation.z,
+        length: robot.scale.y,
+      }
       let target = this.state.targets[id]
       if (!target) continue
 
-      let diff = { x: target.x - current.x, y: target.y - current.y }
-      if (Math.abs(diff.x) < 0.5 && Math.abs(diff.y) < 0.5) continue
+      let diff = {
+        x: target.x - current.x,
+        y: target.y - current.y,
+        angle: target.angle - current.angle,
+        length: target.length - current.length
+      }
+      if (!robot.init) {
+        if (robot.scale.y > 1) {
+          robot.scale.y -= 0.1
+          robot.wireMesh.scale.y -= 0.1
+          continue
+        } else {
+          robot.init = true
+        }
+      }
+
+      if (Math.abs(diff.x) < 1 && Math.abs(diff.y) < 1 && Math.abs(diff.angle) < 0.1) {
+        if (Math.abs(diff.length) > 0.1) {
+          robot.scale.y += diff.length / 30
+          robot.wireMesh.scale.y += diff.length / 30
+        }
+      }
 
       robot.position.x += diff.x / 100
       robot.position.y += diff.y / 100
+      robot.rotation.z += diff.angle / 50
       robot.wireMesh.position.x += diff.x / 100
       robot.wireMesh.position.y += diff.y / 100
+      robot.wireMesh.rotation.z += diff.angle / 50
     }
   }
 
