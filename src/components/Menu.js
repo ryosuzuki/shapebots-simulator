@@ -1,6 +1,13 @@
 import React, { Component } from 'react'
 import simpleIcons from 'simple-icons'
 
+import data from './data.json'
+
+import Robot from './Robot'
+import Draw from './Draw'
+import Visualize from './Visualize'
+
+
 class Menu extends Component {
   constructor(props) {
     super(props)
@@ -17,13 +24,16 @@ class Menu extends Component {
       icons.push(icon)
     }
 
-    let graphs = ['dot', 'line', 'bar']
+    this.icons = icons
+    this.graphs = ['dots', 'lines', 'bars']
+    this.sources = ['data']
 
     this.state = {
-      type: 'horizontal',
-      icons: icons,
+      type: App.type,
+      max: App.max,
+      graph: App.graph,
       icon: null,
-      graphs: graphs,
+      source: null,
     }
   }
 
@@ -32,37 +42,48 @@ class Menu extends Component {
 
   onChangeSvg(event) {
     let id = event.target.value
-    let svg = this.state.icons[id].svg
+    let icon = this.icons[id]
+    this.setState({ icon: icon })
+    let svg = icon.svg
     let parser = new DOMParser()
     let dom = parser.parseFromString(svg, 'text/xml')
     let d = dom.querySelector('path').getAttribute('d')
-    app.pathData = d
-    app.draw()
+    App.pathData = d
+    Draw.draw()
   }
 
   onChangeType(event) {
     let type = event.target.value
     this.setState({ type: type })
-    app.type = type
-    app.draw()
+    App.type = type
+    Draw.draw()
   }
 
   onChangeNumber(event) {
-    console.log(event.target.value)
     let max = event.target.value
-    app.resetRobots(max)
+    this.setState({ max: max })
+    Robot.resetRobots(max)
   }
 
   onChangeGraph(event) {
-    console.log(event.target.value)
+    let graph = event.target.value
+    this.setState({ graph: graph })
+    App.graph = graph
+    Visualize.visualize()
   }
 
+  onChangeSource(event) {
+    let source = event.target.value
+    this.setState({ source: source })
+    App.data = data
+    Visualize.visualize()
+  }
 
   render() {
     return (
       <div id="menu">
-        <h1>Menu</h1>
         <div className="ui form">
+          <h3>Settings</h3>
           <div className="field">
             <label>Robot Type</label>
             <div className="field">
@@ -81,7 +102,7 @@ class Menu extends Component {
           <div className="field">
             <label>Number of Robots</label>
             <select className="ui dropdown" onChange={this.onChangeNumber.bind(this)}>
-              <option value="">{ app.max }</option>
+              <option value="">{ App.max }</option>
               { [...Array(20).keys()].map(i => (i + 1) * 10).map((num, id) => {
                 return (
                   <option key={ id } value={ num }>{num}</option>
@@ -89,24 +110,38 @@ class Menu extends Component {
               })}
             </select>
           </div>
+          <div className="ui divider"></div>
+          <h3>Display</h3>
           <div className="field">
             <label>SVG</label>
             <select className="ui dropdown" onChange={this.onChangeSvg.bind(this)}>
               <option value="">Select SVG</option>
-              { this.state.icons.map((icon, id) => {
+              { this.icons.map((icon, id) => {
                 return (
                   <option key={ id } value={ id }>{icon.name}</option>
                 )
               })}
             </select>
           </div>
+          <div className="ui divider"></div>
+          <h3>Data Viz</h3>
           <div className="field">
-            <label>Data Viz</label>
+            <label>Graph Type</label>
             <select className="ui dropdown" onChange={this.onChangeGraph.bind(this)}>
-              <option value="">Select Graph Type</option>
-              { this.state.graphs.map((graph, id) => {
+              { this.graphs.map((graph, id) => {
                 return (
                   <option key={ id } value={ graph }>{ graph }</option>
+                )
+              })}
+            </select>
+          </div>
+          <div className="field">
+            <label>Data Source</label>
+            <select className="ui dropdown" onChange={this.onChangeSource.bind(this)}>
+              <option value="">Select Data Source</option>
+              { this.sources.map((source, id) => {
+                return (
+                  <option key={ id } value={ source }>{ source }</option>
                 )
               })}
             </select>

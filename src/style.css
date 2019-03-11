@@ -5,4 +5,9 @@
 #menu {
   float: left;
   margin-left: 20px;
+  margin-top: 10px;
+}
+
+#menu h3 {
+  margin-top: 0;
 }
