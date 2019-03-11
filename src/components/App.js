@@ -48,8 +48,8 @@ class App extends Component {
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
     const renderer = new THREE.WebGLRenderer({ antialias: true })
-    camera.position.set(0, 20, 20)
-    camera.up.set(0,0,1)
+    camera.position.set(0, 20, -20)
+    camera.up.set(0, 0, -1)
 
     renderer.setClearColor('#eee')
     renderer.setSize(width, height)
@@ -205,15 +205,16 @@ class App extends Component {
 
   getOutline() {
     let scale = 1
-    let offset = 10
+    let offsetX = 10
+    let offsetY = 10
     let points = []
     let group = 0
     for (let contour of this.contours) {
       contour = simplify.radialDistance(contour, 1)
       for (let point of contour) {
         points.push({
-          x: point[0] * scale - offset,
-          y: point[1] * scale - offset,
+          x: point[0] * scale - offsetX,
+          y: point[1] * scale - offsetY,
           group: group
         })
       }
@@ -222,7 +223,7 @@ class App extends Component {
 
     let ratio = Math.round(points.length / this.max)
     points = points.map((point, i) => {
-      if (i % ratio === 0) return point
+      if (ratio === 0 || i % ratio === 0) return point
     })
     points = _.compact(points)
     console.log(points)

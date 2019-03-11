@@ -17,10 +17,13 @@ class Menu extends Component {
       icons.push(icon)
     }
 
+    let graphs = ['dot', 'line', 'bar']
+
     this.state = {
+      type: 'horizontal',
       icons: icons,
       icon: null,
-      type: 'horizontal'
+      graphs: graphs,
     }
   }
 
@@ -49,6 +52,11 @@ class Menu extends Component {
     let max = event.target.value
     app.resetRobots(max)
   }
+
+  onChangeGraph(event) {
+    console.log(event.target.value)
+  }
+
 
   render() {
     return (
@@ -92,6 +100,18 @@ class Menu extends Component {
               })}
             </select>
           </div>
+          <div className="field">
+            <label>Data Viz</label>
+            <select className="ui dropdown" onChange={this.onChangeGraph.bind(this)}>
+              <option value="">Select Graph Type</option>
+              { this.state.graphs.map((graph, id) => {
+                return (
+                  <option key={ id } value={ graph }>{ graph }</option>
+                )
+              })}
+            </select>
+          </div>
+
         </div>
       </div>
     )
