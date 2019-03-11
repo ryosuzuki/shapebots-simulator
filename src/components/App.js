@@ -19,15 +19,12 @@ class App extends Component {
     super(props)
     window.app = this
     this.state = {
-      robots: [],
-      data: null,
       ids: [],
-      corners: [],
-      points: [],
       targets: {},
     }
 
     this.max = 100
+    this.type = 'horizontal'
 
     this.width = 1000
     this.height = 800
@@ -103,6 +100,16 @@ class App extends Component {
     this.scene.add(grid)
   }
 
+  resetRobots(newMax) {
+    for (let id = 0; id < this.max; id++) {
+      let robot = this.scene.getObjectByName(id)
+      this.scene.remove(robot)
+      this.scene.remove(robot.wireMesh)
+    }
+    this.max = newMax
+    this.addRobots()
+  }
+
   moveRobot(id, x, y, angle, length) {
     if (!angle) angle = 0
     if (!length) length = 1
@@ -163,8 +170,15 @@ class App extends Component {
     this.outline = this.getOutline()
     this.points = this.outline.points
     this.lines = this.outline.lines
-    this.drawLines()
-    // this.drawDots()
+
+    switch (this.type) {
+      case 'horizontal':
+        this.drawLines()
+        break
+      case 'none':
+        this.drawDots()
+        break
+    }
   }
 
 
@@ -274,6 +288,7 @@ class App extends Component {
     robot.name = id
     robot.position.x = x
     robot.position.y = y
+    robot.wireMesh.name = `${id}-wire`
     robot.wireMesh.position.copy(robot.position)
     robot.updateMatrix()
     robot.overdraw = false
