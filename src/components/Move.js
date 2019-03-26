@@ -1,4 +1,8 @@
 
+// parameters
+const acceleration = 1
+const avoidanceTendency = 10
+
 const Move = {
   moveRobot(id, x, y, angle, length) {
     if (!angle) angle = 0
@@ -9,6 +13,92 @@ const Move = {
     }
 
     App.targets[id] = { x: x, y: y, angle: angle, length: length }
+  },
+
+  getCollisionTime(id, vx, vy) {
+    let tmin = Infinity
+    let a = App.scene.getObjectByName(id)
+
+    for (let i = 0; i < App.max; i++) {
+      if (i == id) continue;
+
+      const b = App.scene.getObjectByName(i)
+      const ux = 2 * vx - a.velocity.x - b.velocity.x
+      const uy = 2 * vy - a.velocity.y - b.velocity.y
+      const dx = b.position.x - a.position.x
+      const dy = b.position.y - a.position.y
+      const s = a.size + b.size
+      const c2 = ux * ux + uy * uy
+      const c1 = -2 * (ux * dx + uy * dy)
+      const c0 = dx * dx + dy * dy - s * s
+
+      let t = Infinity;
+      if (c2 == 0) {
+        t = -c0 / c1
+      } else {
+        const discriminant = c1 * c1 - 4 * c2 * c0
+        if (discriminant >= 0) {
+          const sq = Math.sqrt(discriminant)
+          const t1 = (-c1 - sq) / (2 * c2)
+          const t2 = (-c1 + sq) / (2 * c2)
+          if (c0 < 0) {
+            t = 0;  // Already collided!
+          } else if (c1 <= 0) {
+            t = t1;
+          }
+        }
+      }
+
+      if (t < tmin) {
+        tmin = t
+      }
+    }
+    return tmin
+  },
+
+  getRvoVelocity(id, dt) {
+    const accel = acceleration
+    const w = avoidanceTendency
+
+    const a = App.scene.getObjectByName(id)
+    const target = App.targets[id]
+    if (!target) return { x: 0, y: 0 }
+
+    let prefVx = target.x - a.position.x
+    let prefVy = target.y - a.position.y
+    const l = Math.sqrt(prefVx**2 + prefVy**2)
+    if (l > 1) {
+      prefVx *= a.prefSpeed / l
+      prefVy *= a.prefSpeed / l
+    }
+
+    // const scale = 20
+    // this.ctx.fillRect(a.x + scale * prefVx - 1, a.y + scale * prefVy - 1, 3, 3);
+
+    let rvoVx = prefVx
+    let rvoVy = prefVy
+    let min = Infinity
+
+    for (let i = 0; i < 100; i++) {
+      const vx = a.velocity.x + accel * dt * (2 * Math.random() - 1)
+      const vy = a.velocity.y + accel * dt * (2 * Math.random() - 1)
+      const collisionTime = this.getCollisionTime(id, vx, vy)
+      const dvx = vx - prefVx
+      const dvy = vy - prefVy
+      const penalty = w / collisionTime + Math.sqrt(dvx**2 + dvy**2)
+      if (penalty < min) {
+        rvoVx = vx
+        rvoVy = vy
+        min = penalty
+      }
+    }
+
+    // this.ctx.beginPath();
+    // this.ctx.moveTo(a.x, a.y);
+    // this.ctx.lineTo(a.x + scale * rvoVx, a.y + scale * rvoVy);
+    // this.ctx.stroke();
+
+    return { x: rvoVx, y: rvoVy };
   },
 
   move() {
@@ -46,11 +136,21 @@ const Move = {
         }
       }
 
-      robot.position.x += diff.x / 100
-      robot.position.y += diff.y / 100
+      const dt = 0.1
+      const v = this.getRvoVelocity(id, dt)
+      robot.velocity.x = v.x
+      robot.velocity.y = v.y
+
+
+      robot.position.x += dt * robot.velocity.x
+      // diff.x / 100
+      robot.position.y += dt * robot.velocity.y
+      // diff.y / 100
       robot.rotation.z += diff.angle / 50
-      robot.wireMesh.position.x += diff.x / 100
-      robot.wireMesh.position.y += diff.y / 100
+      robot.wireMesh.position.x = robot.position.x
+      // += dt * robot.velocity.x //diff.x / 100
+      robot.wireMesh.position.y = robot.position.y
+      // += dt * robot.velocity.x // diff.y / 100
       robot.wireMesh.rotation.z += diff.angle / 50
     }
   }

@@ -26,6 +26,10 @@ const Robot = {
       linewidth: 2
     })
 
+    robot.velocity = { x: 0, y: 0 }
+    robot.prefSpeed = 0.5
+    robot.size = 1
+
     robot.wireMesh = new THREE.LineSegments(wireGeometry, wireMaterial)
     robot.isRobot = true
     robot.robotId = id

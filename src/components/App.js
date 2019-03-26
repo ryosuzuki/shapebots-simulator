@@ -24,7 +24,7 @@ class App extends Component {
     window.App = this
     this.state = {}
 
-    this.max = 100
+    this.max = 30
     this.type = 'horizontal'
     this.graph = 'dots'
 
