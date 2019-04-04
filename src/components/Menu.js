@@ -38,6 +38,19 @@ class Menu extends Component {
   }
 
   componentDidMount() {
+    this.onDrawLogo()
+  }
+
+  onDrawLogo() {
+    $.get('/sigchi.svg', function(svg){
+      // let svg = icon.svg
+      let parser = new DOMParser()
+      let dom = parser.parseFromString(svg, 'text/xml')
+      let d = dom.querySelector('path').getAttribute('d')
+      console.log(d)
+      App.pathData = d
+      Draw.draw()
+    }, 'text')
   }
 
   onChangeSvg(event) {

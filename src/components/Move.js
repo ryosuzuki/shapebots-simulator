@@ -1,9 +1,11 @@
 
 // parameters
+const enableRvo = false
 const acceleration = 1
 const avoidanceTendency = 10
 
 const Move = {
+
   moveRobot(id, x, y, angle, length) {
     if (!angle) angle = 0
     if (!length) length = 1
@@ -13,6 +15,64 @@ const Move = {
     }
 
     App.targets[id] = { x: x, y: y, angle: angle, length: length }
+  },
+
+  move() {
+    for (let id = 0; id < App.max; id++) {
+      let robot = App.scene.getObjectByName(id)
+      let current = {
+        x: robot.position.x,
+        y: robot.position.y,
+        angle: robot.rotation.z,
+        length: robot.scale.y,
+      }
+      let target = App.targets[id]
+      if (!target) continue
+
+      let diff = {
+        x: target.x - current.x,
+        y: target.y - current.y,
+        angle: target.angle - current.angle,
+        length: target.length - current.length
+      }
+      if (!robot.init) {
+        if (robot.scale.y > 1) {
+          robot.scale.y -= 0.1
+          robot.wireMesh.scale.y -= 0.1
+          continue
+        } else {
+          robot.init = true
+        }
+      }
+
+      if (Math.abs(diff.x) < 1 && Math.abs(diff.y) < 1 && Math.abs(diff.angle) < 0.1) {
+        if (Math.abs(diff.length) > 0.1) {
+          robot.scale.y += diff.length / 30
+          robot.wireMesh.scale.y += diff.length / 30
+        }
+      }
+
+      if (enableRvo) {
+        const dt = 0.1
+        const v = this.getRvoVelocity(id, dt)
+        robot.velocity.x = v.x
+        robot.velocity.y = v.y
+        robot.position.x += dt * robot.velocity.x
+        robot.position.y += dt * robot.velocity.y
+        robot.rotation.z += diff.angle / 50
+        robot.wireMesh.position.x = robot.position.x
+        robot.wireMesh.position.y = robot.position.y
+        robot.wireMesh.rotation.z += diff.angle / 50
+      } else {
+        robot.position.x += diff.x / 100
+        robot.position.y += diff.y / 100
+        robot.rotation.z += diff.angle / 50
+        robot.wireMesh.position.x = robot.position.x
+        robot.wireMesh.position.y = robot.position.y
+        robot.wireMesh.rotation.z = robot.rotation.z
+      }
+
+    }
   },
 
   getCollisionTime(id, vx, vy) {
@@ -100,60 +160,6 @@ const Move = {
 
     return { x: rvoVx, y: rvoVy };
   },
-
-  move() {
-    for (let id = 0; id < App.max; id++) {
-      let robot = App.scene.getObjectByName(id)
-      let current = {
-        x: robot.position.x,
-        y: robot.position.y,
-        angle: robot.rotation.z,
-        length: robot.scale.y,
-      }
-      let target = App.targets[id]
-      if (!target) continue
-
-      let diff = {
-        x: target.x - current.x,
-        y: target.y - current.y,
-        angle: target.angle - current.angle,
-        length: target.length - current.length
-      }
-      if (!robot.init) {
-        if (robot.scale.y > 1) {
-          robot.scale.y -= 0.1
-          robot.wireMesh.scale.y -= 0.1
-          continue
-        } else {
-          robot.init = true
-        }
-      }
-
-      if (Math.abs(diff.x) < 1 && Math.abs(diff.y) < 1 && Math.abs(diff.angle) < 0.1) {
-        if (Math.abs(diff.length) > 0.1) {
-          robot.scale.y += diff.length / 30
-          robot.wireMesh.scale.y += diff.length / 30
-        }
-      }
-
-      const dt = 0.1
-      const v = this.getRvoVelocity(id, dt)
-      robot.velocity.x = v.x
-      robot.velocity.y = v.y
-
-
-      robot.position.x += dt * robot.velocity.x
-      // diff.x / 100
-      robot.position.y += dt * robot.velocity.y
-      // diff.y / 100
-      robot.rotation.z += diff.angle / 50
-      robot.wireMesh.position.x = robot.position.x
-      // += dt * robot.velocity.x //diff.x / 100
-      robot.wireMesh.position.y = robot.position.y
-      // += dt * robot.velocity.x // diff.y / 100
-      robot.wireMesh.rotation.z += diff.angle / 50
-    }
-  }
 
 }
 

@@ -30,7 +30,7 @@ const Draw = {
     console.log(rids)
     let i = 0
     for (let rid of rids) {
-      Move.moveRobot(rid, i, 30)
+      Move.moveRobot(rid, i, -30) // 30 ryo
       i++
     }
   },
@@ -67,7 +67,10 @@ const Draw = {
     if (!App.pathData) return
     let path = parse(App.pathData)
     let contours = getContours(path)
-    let scale = 1
+    let scale = 0.1 // 1 ryo
+    let ryo = 2
+    scale = scale * ryo
+
     let points = []
     let group = 0
     let maxX = 0
@@ -84,8 +87,12 @@ const Draw = {
       group++
     }
 
-    let offsetX = - maxX / 2
-    let offsetY = + maxY / 2
+    // let offsetX = - maxX / 2 ryo
+    // let offsetY = + maxY / 2 ryo
+
+    let offsetX = - maxX / 2 - 12 * ryo
+    let offsetY = + maxY / 2 + 275 * ryo
+
     points = points.map((point) => {
       return { x: point.x + offsetX, y: point.y + offsetY, group: point.group }
     })

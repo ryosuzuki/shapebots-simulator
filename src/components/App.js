@@ -24,7 +24,7 @@ class App extends Component {
     window.App = this
     this.state = {}
 
-    this.max = 30
+    this.max = 60
     this.type = 'horizontal'
     this.graph = 'dots'
 
@@ -52,7 +52,7 @@ class App extends Component {
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
     const renderer = new THREE.WebGLRenderer({ antialias: true })
-    camera.position.set(0, -20, 30)
+    camera.position.set(0, -10, 50) // ryo
     camera.up.set(0, 0, 1)
 
     renderer.setClearColor('#eee')
@@ -74,7 +74,7 @@ class App extends Component {
 
   init() {
     Mouse.init()
-    Grid.addGrid()
+    // Grid.addGrid() ryo
     Robot.addRobots()
     this.renderScene()
     this.start()
